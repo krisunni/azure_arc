@@ -19,20 +19,6 @@ $clusters = @(
 
 Start-Transcript -Path $Env:ArcBoxLogsDir\DataOpsLogonScript.log
 
-# Remove registry keys that are used to automatically logon the user (only used for first-time setup)
-$registryPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
-$keys = @("AutoAdminLogon", "DefaultUserName", "DefaultPassword")
-
-foreach ($key in $keys) {
-    try {
-        $property = Get-ItemProperty -Path $registryPath -Name $key -ErrorAction Stop
-        Remove-ItemProperty -Path $registryPath -Name $key
-        Write-Host "Removed registry key that are used to automatically logon the user: $key"
-    } catch {
-        Write-Verbose "Key $key does not exist."
-    }
-}
-
 # Create desktop shortcut for Logs-folder
 $WshShell = New-Object -comObject WScript.Shell
 $LogsPath = "C:\ArcBox\Logs"
@@ -412,7 +398,7 @@ $clusters | Foreach-Object {
             --auto-upgrade false `
             --scope cluster `
             --release-namespace arc `
-            --version 1.34.0 `
+            --version 1.37.0 `
             --config Microsoft.CustomLocation.ServiceAccount=sa-bootstrapper
 
             Write-Host "`n"
@@ -431,6 +417,15 @@ $clusters | Foreach-Object {
             $connectedClusterId = az connectedk8s show --name $clusterName --resource-group $Env:resourceGroup --query id -o tsv
             $extensionId = az k8s-extension show --name arc-data-services --cluster-type connectedClusters --cluster-name $clusterName --resource-group $Env:resourceGroup --query id -o tsv
             Start-Sleep -Seconds 30
+
+            # Verify data services extension is created
+            if ($extensionId -ne '') {
+              Write-Host "Data services extension created sucussfully on $clusterName. Extension Id: $extensionId"
+            }
+            else {
+                Write-Error "Failed to create data services extension on $clusterName. Extension Id: $extensionId"
+                Exit 1
+            }            
 
             Write-Host "Creating custom location on $clusterName"
 

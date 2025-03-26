@@ -4,7 +4,7 @@ param azureLocation string
 @description('Name of your log analytics workspace')
 param logAnalyticsWorkspaceId string
 
-@description('The flavor of ArcBox you want to deploy. Valid values are: \'Full\', \'ITPro\', \'DevOps\'')
+@description('The flavor of ArcBox you want to deploy. Valid values are: \'DataOps\', \'DevOps\', \'ITPro\'')
 param flavor string
 
 @description('Tags to assign for all ArcBox resources')
@@ -23,7 +23,6 @@ var policies = [
     name: '(ArcBox) Enable Azure Monitor for Hybrid VMs with AMA'
     definitionId: '/providers/Microsoft.Authorization/policySetDefinitions/59e9c3eb-d8df-473b-8059-23fd38ddd0f0'
     flavors: [
-      'Full'
       'ITPro'
     ]
     roleDefinition:  [
@@ -36,7 +35,7 @@ var policies = [
         value: logAnalyticsWorkspaceId
       }
       enableProcessesAndDependencies: {
-        value: true
+        value: false
       }
     }
   }
@@ -44,7 +43,6 @@ var policies = [
     name: '(ArcBox) Enable Microsoft Defender on Kubernetes clusters'
     definitionId: '/providers/Microsoft.Authorization/policyDefinitions/708b60a6-d253-4fe0-9114-4be4c00f012c'
     flavors: [
-      'Full'
       'DevOps'
     ]
     roleDefinition: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/92aaf0da-9dab-42b6-94a3-d43ce8d16293'
@@ -52,7 +50,7 @@ var policies = [
   }
 ]
 
-resource policies_name 'Microsoft.Authorization/policyAssignments@2021-06-01' = [for item in policies: if (contains(item.flavors, flavor)) {
+resource policies_name 'Microsoft.Authorization/policyAssignments@2025-01-01' = [for item in policies: if (contains(item.flavors, flavor)) {
   name: item.name
   location: azureLocation
   identity: {
@@ -64,7 +62,7 @@ resource policies_name 'Microsoft.Authorization/policyAssignments@2021-06-01' = 
   }
 }]
 
-resource policy_AMA_role_0 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = if (contains(policies[0].flavors, flavor)) {
+resource policy_AMA_role_0 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (contains(policies[0].flavors, flavor)) {
   name: guid( policies[0].name, policies[0].roleDefinition[0],resourceGroup().id)
   properties: {
     roleDefinitionId: any(policies[0].roleDefinition[0])
@@ -73,7 +71,7 @@ resource policy_AMA_role_0 'Microsoft.Authorization/roleAssignments@2020-10-01-p
   }
 }
 
-resource policy_AMA_role_1 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = if (contains(policies[0].flavors, flavor)) {
+resource policy_AMA_role_1 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (contains(policies[0].flavors, flavor)) {
   name: guid( policies[0].name, policies[0].roleDefinition[1],resourceGroup().id)
   properties: {
     roleDefinitionId: any(policies[0].roleDefinition[1])
@@ -82,7 +80,7 @@ resource policy_AMA_role_1 'Microsoft.Authorization/roleAssignments@2020-10-01-p
   }
 }
 
-resource policy_AMA_role_2 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = if (contains(policies[0].flavors, flavor)) {
+resource policy_AMA_role_2 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (contains(policies[0].flavors, flavor)) {
   name: guid( policies[0].name, policies[0].roleDefinition[2],resourceGroup().id)
   properties: {
     roleDefinitionId: any(policies[0].roleDefinition[2])
@@ -91,7 +89,7 @@ resource policy_AMA_role_2 'Microsoft.Authorization/roleAssignments@2020-10-01-p
   }
 }
 
-resource policy_defender_kubernetes 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = if (contains(policies[1].flavors, flavor)) {
+resource policy_defender_kubernetes 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (contains(policies[1].flavors, flavor)) {
   name: guid( policies[1].name, policies[1].roleDefinition,resourceGroup().id)
   properties: {
     roleDefinitionId: any(policies[1].roleDefinition)
@@ -101,7 +99,7 @@ resource policy_defender_kubernetes 'Microsoft.Authorization/roleAssignments@202
 }
 
 
-resource applyCustomTags 'Microsoft.Authorization/policyAssignments@2021-06-01' = [for (tag,i) in items(resourceTags): {
+resource applyCustomTags 'Microsoft.Authorization/policyAssignments@2025-01-01' = [for (tag,i) in items(resourceTags): {
   name: '(ArcBox) Tag resources-${tag.key}'
   location: azureLocation
   identity: {
@@ -120,7 +118,7 @@ resource applyCustomTags 'Microsoft.Authorization/policyAssignments@2021-06-01' 
   }
 }]
 
-resource policy_tagging_resources 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for (tag,i) in items(resourceTags): {
+resource policy_tagging_resources 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for (tag,i) in items(resourceTags): {
   name: guid(applyCustomTags[i].name, tagsRoleDefinitionId,resourceGroup().id)
   properties: {
     roleDefinitionId: tagsRoleDefinitionId
@@ -129,7 +127,7 @@ resource policy_tagging_resources 'Microsoft.Authorization/roleAssignments@2020-
   }
 }]
 
-resource updateManagerArcPolicyLinux 'Microsoft.Authorization/policyAssignments@2024-04-01' = {
+resource updateManagerArcPolicyLinux 'Microsoft.Authorization/policyAssignments@2025-01-01' = {
   name: '(ArcBox) Enable Azure Update Manager for Linux hybrid machines'
   location: azureLocation
   scope: resourceGroup()
@@ -148,7 +146,7 @@ resource updateManagerArcPolicyLinux 'Microsoft.Authorization/policyAssignments@
   }
 }
 
-resource updateManagerArcPolicyWindows 'Microsoft.Authorization/policyAssignments@2024-04-01' = {
+resource updateManagerArcPolicyWindows 'Microsoft.Authorization/policyAssignments@2025-01-01' = {
   name: '(ArcBox) Enable Azure Update Manager for Windows hybrid machines'
   location: azureLocation
   scope: resourceGroup()
@@ -167,7 +165,7 @@ resource updateManagerArcPolicyWindows 'Microsoft.Authorization/policyAssignment
   }
 }
 
-resource updateManagerAzurePolicyWindows  'Microsoft.Authorization/policyAssignments@2024-04-01' = {
+resource updateManagerAzurePolicyWindows  'Microsoft.Authorization/policyAssignments@2025-01-01' = {
   name: '(ArcBox) Enable Azure Update Manager for Azure Windows machines'
   location: azureLocation
   scope: resourceGroup()
@@ -186,7 +184,7 @@ resource updateManagerAzurePolicyWindows  'Microsoft.Authorization/policyAssignm
   }
 }
 
-resource updateManagerAzurePolicyLinux  'Microsoft.Authorization/policyAssignments@2024-04-01' = {
+resource updateManagerAzurePolicyLinux  'Microsoft.Authorization/policyAssignments@2025-01-01' = {
   name: '(ArcBox) Enable Azure Update Manager for Azure Linux machines'
   location: azureLocation
   scope: resourceGroup()
@@ -205,7 +203,7 @@ resource updateManagerAzurePolicyLinux  'Microsoft.Authorization/policyAssignmen
   }
 }
 
-resource sshPostureControlAudit  'Microsoft.Authorization/policyAssignments@2024-04-01' = {
+resource sshPostureControlAudit  'Microsoft.Authorization/policyAssignments@2025-01-01' = {
   name: '(ArcBox) Enable SSH Posture Control audit'
   location: azureLocation
   scope: resourceGroup()

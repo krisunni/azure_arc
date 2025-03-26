@@ -1577,6 +1577,22 @@ function Set-HCIDeployPrereqs {
 
 }
 
+function Set-HCIDeployPrereqsWorkaround {
+
+    Get-AzConnectedMachine -ResourceGroupName $env:resourceGroup | ForEach-Object {
+
+        Remove-AzConnectedMachineExtension -MachineName $PSItem.Name -ResourceGroupName $env:resourceGroup -Name AzureEdgeLifecycleManager -AsJob
+
+    } | Wait-Job
+
+
+       Get-AzConnectedMachine -ResourceGroupName $env:resourceGroup | ForEach-Object {
+
+        New-AzConnectedMachineExtension -MachineName $PSItem.Name -ResourceGroupName $env:resourceGroup -Name AzureEdgeLifecycleManager -AsJob -TypeHandlerVersion 30.2411.2.789 -Location $env:azureLocation -Publisher "Microsoft.AzureStack.Orchestration" -ExtensionType "LcmController"
+
+    } | Wait-Job
+
+}
 function Update-HCICluster {
     param (
         $HCIBoxConfig,
@@ -1877,6 +1893,8 @@ $null = Set-AzResource -ResourceName $env:computername -ResourceGroupName $env:r
 
 Set-HCIDeployPrereqs -HCIBoxConfig $HCIBoxConfig -localCred $localCred -domainCred $domainCred
 
+Set-HCIDeployPrereqsWorkaround
+
 & "$Env:HCIBoxDir\Generate-ARM-Template.ps1"
 
 #######################################################################################
@@ -1908,6 +1926,35 @@ try {
 }
 catch {
     Write-Output "Validation failed. Re-run New-AzResourceGroupDeployment to retry. Error: $($_.Exception.Message)"
+}
+
+
+<#
+  Adding known governance tags for avoiding disruptions to the deployment. These tags are applicable to ONLY Microsoft-internal Azure lab tenants and designed for managing automated governance processes related to cost optimization and security controls.
+  Some resources are not created by the Bicep template for HCIBox, hence the need to add them here as part of the automation.
+#>
+
+$VmResource = Get-AzResource -ResourceName $env:computername -ResourceGroupName $env:resourceGroup -ResourceType 'microsoft.compute/virtualmachines'
+
+if ($VmResource.Tags.ContainsKey('CostControl') -and $VmResource.Tags.ContainsKey('SecurityControl')) {
+
+    if($VmResource.Tags.CostControl -eq 'Ignore' -and $VmResource.Tags.SecurityControl -eq 'Ignore') {
+
+        Write-Output "CostControl and SecurityControl tags are set to 'Ignore' for the VM resource, adding them to other resources created by the Azure Local deployment"
+
+        $tags = @{
+            'CostControl' = 'Ignore'
+            'SecurityControl' = 'Ignore'
+        }
+
+        Get-AzResource -ResourceGroupName $env:resourceGroup -ResourceType 'Microsoft.KeyVault/vaults' | Update-AzTag -Tag $tags -Operation Merge
+
+        Get-AzResource -ResourceGroupName $env:resourceGroup -ResourceType 'Microsoft.Storage/storageAccounts' | Update-AzTag -Tag $tags -Operation Merge
+
+        Get-AzResource -ResourceGroupName $env:resourceGroup -ResourceType 'Microsoft.Compute/disks' | Update-AzTag -Tag $tags -Operation Merge
+
+    }
+
 }
 
 Write-Host "[Build cluster - Step 11/11] Run cluster deployment..." -ForegroundColor Green
