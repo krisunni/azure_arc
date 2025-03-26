@@ -1,8 +1,8 @@
 @{
 
-    # This is the PowerShell datafile used to provide configuration information for the HCIBox environment. Product keys and password are not encrypted and will be available on all hosts during installation.
+# This is the PowerShell datafile used to provide configuration information for the HCIBox environment. Product keys and password are not encrypted and will be available on all hosts during installation.
 
-    # HCIBox Folders
+# HCIBox Folders
     Paths = @{
         DSCDir = "C:\HCIBox\DSC"
         TestsDir = "C:\HCIBox\Tests"
@@ -71,7 +71,7 @@
     FabricSwitch                         = "vSwitch-Fabric"
     FabricNIC                            = "FABRIC"
     ClusterVSwitchName                   = "hciSwitch"
-    ClusterName                          = "hciboxcluster"
+    ClusterName                          = "nomadhciboxcluster"
     WACVMName                            = "AdminCenter"
     ClusterSharedVolumePath              = "C:\ClusterStorage\S2D_vDISK1"
     LCMDeployUsername                    = "HCIBoxDeployUser"
@@ -82,8 +82,8 @@
     GUIProductKey                        = "WX4NM-KYWYW-QJJR4-XV3QB-6VM33"        # Product key for Windows Server 2019 (Desktop Experience) Datacenter Installation
 
     # SDN Lab Domain
-    SDNDomainFQDN                        = "jumpstart.local"                      # Limit name (not the .com) to 14 characters as the name will be used as the NetBIOS name.
-    DCName                               = "jumpstartdc"                          # Name of the domain controller virtual machine (limit to 14 characters)
+    SDNDomainFQDN                        = "nomad.local"                      # Limit name (not the .com) to 14 characters as the name will be used as the NetBIOS name.
+    DCName                               = "nomaddc"                          # Name of the domain controller virtual machine (limit to 14 characters)
 
     # NAT Configuration
     natHostSubnet                        = "192.168.128.0/24"
@@ -160,7 +160,7 @@
 
     # AKS and Resource bridge variables
     rbCustomLocationName                 = "jumpstart"
-    AKSworkloadClusterName               = "hcibox-aks" # lowercase only
+    AKSworkloadClusterName               = "nomad-hcibox-aks" # lowercase only
     AKSvnetname                          = "akshcivnet"
     AKSNodeStartIP                       = "10.10.0.101"
     AKSNodeEndIP                         = "10.10.0.199"
